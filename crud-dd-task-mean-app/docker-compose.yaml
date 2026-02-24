@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: appdb
+    networks:
+      - my-network
+
+  backend:
+    image: apsingh566/ddtask-backend:latest
+    container_name: backend
+    restart: always
+    ports:
+      - "5000:8080"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://admin:admin123@mongo:27017/appdb?authSource=admin
+    networks:
+      - my-network
+
+  frontend:
+    image: apsingh566/ddtask-frontend:latest
+    container_name: frontend
+    restart: always
+    ports:
+      - "3200:80"
+    depends_on:
+      - backend
+    networks:
+      - my-network
+
+volumes:
+  mongo-data:
+
+networks:
+  my-network:
+    driver: bridge
