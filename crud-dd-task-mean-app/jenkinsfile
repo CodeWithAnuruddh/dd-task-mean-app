@@ -42,9 +42,9 @@ pipeline {
             steps {
                 sh """
                 cd crud-dd-task-mean-app
-                docker compose down --remove-orphans || true
-                docker compose pull
-                docker compose up -d --force-recreate
+                docker-compose down --remove-orphans || true
+                docker-compose pull
+                docker-compose up -d --force-recreate
         """
             }
         }
