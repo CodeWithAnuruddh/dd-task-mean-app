@@ -1,27 +1,98 @@
-In this DevOps task, you need to build and deploy a full-stack CRUD application using the MEAN stack (MongoDB, Express, Angular 15, and Node.js). The backend will be developed with Node.js and Express to provide REST APIs, connecting to a MongoDB database. The frontend will be an Angular application utilizing HTTPClient for communication.  
+# DevOps Project Highlights - MEAN DD CRUD Application
 
-The application will manage a collection of tutorials, where each tutorial includes an ID, title, description, and published status. Users will be able to create, retrieve, update, and delete tutorials. Additionally, a search box will allow users to find tutorials by title.
+This document summarizes a complete end-to-end DevOps delivery for a full-stack MEAN application, fully pushed to GitHub with containerization, cloud deployment, CI/CD automation, and reverse proxy setup.
 
-## Project setup
+## Project Repository
 
-### Node.js Server
+- GitHub: `https://github.com/CodeWithAnuruddh/dd-task-mean-app`
 
-cd backend
+## Live Deployment
 
-npm install
+- Application URL: `http://13.232.115.247:3200/`
+- Backend API: `http://13.232.115.247:5000/api/tutorials`
 
-You can update the MongoDB credentials by modifying the `db.config.js` file located in `app/config/`.
+## What Was Delivered
 
-Run `node server.js`
+- Full MEAN application codebase (frontend + backend)
+- Dockerized backend and frontend services
+- MongoDB containerized with persistent volume
+- Multi-service orchestration with Docker Compose
+- AWS EC2 (Ubuntu 22.04) deployment
+- Jenkins-based CI/CD pipeline
+- Nginx SPA routing support for Angular
+- End-to-end automated deployment on code push
+- Documentation and screenshot evidence in repository
 
-### Angular Client
+## Containerization Architecture
 
-cd frontend
+### Backend Container
 
-npm install
+- Base image: `node:22-alpine`
+- Production dependency install: `npm install --production`
+- Startup command: `node server.js`
+- Exposed Host port: `5000`
 
-Run `ng serve --port 8081`
+### Frontend Container
 
-You can modify the `src/app/services/tutorial.service.ts` file to adjust how the frontend interacts with the backend.
+- Multi-stage Docker build
+- Build stage: `node:18-alpine`
+- Runtime stage: `nginx:alpine`
+- Angular build served from `/usr/share/nginx/html`
+- Exposed port: `80`
+- Exposed Host Port: `3200`
 
-Navigate to `http://localhost:8081/`
+## Docker Compose Topology
+
+- `mongo` (`mongo:6`) with `mongo-data` volume
+- `backend` image: `apsingh566/ddtask-backend:latest` (`5000:8080`)
+- `frontend` image: `apsingh566/ddtask-frontend:latest` (`3200:80`)
+- Shared custom bridge network: `app-network`
+
+## Cloud Environment
+
+- Platform: AWS EC2
+- Instance: `t2.medium`
+- OS: Ubuntu 22.04
+- Installed services: Docker, Docker Compose, Jenkins
+- Database runtime: MongoDB container
+- Web serving: Nginx in frontend container
+
+## CI/CD Automation (Jenkins)
+
+### Pipeline Stages Implemented
+
+1. Checkout code from `main` branch
+2. Build backend Docker image
+3. Build frontend Docker image
+4. Push both images to Docker Hub
+5. Pull latest images on VM
+6. Restart stack with Docker Compose
+7. Cleanup old Docker images
+
+### Deployment Behavior
+
+Every push to GitHub triggers automated build and deployment, resulting in updated running containers with no manual intervention.
+
+## Evidence Included in GitHub
+
+- Jenkins pipeline run screenshots
+- Docker build and push logs
+- Docker Hub image screenshots
+- Running container snapshots
+- Working application UI
+- AWS EC2 infrastructure proof
+- Nginx setup/config screenshots
+
+## Operational Readiness Notes
+
+- Fully containerized stack
+- Persistent MongoDB storage configured
+- SPA routing handled correctly
+- Reverse-proxy-ready architecture
+- CI/CD-driven repeatable deployments
+
+## Author
+
+Anuruddh Pratap Singh  
+DevOps Discover Dollar Assignment - 2026
+
