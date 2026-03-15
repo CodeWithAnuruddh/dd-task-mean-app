@@ -1,0 +1,163 @@
+First Instance
+install java
+maven 
+Jenkins
+
+second Instance(use these tools using docker images inside Kubernetes with the yaml manifest files)
+install docker first
+create docker container of SonarQube(SonarQube:lts-community) both id pass is admin
+nexus this also use docker image of nexus, 
+$ docker run -d -p 8081:8081 --name nexus sonatype/nexus3  its take sometime for getting started.  usernanme - admin pass- go inside docker container 
+
+docker exec -it container_id /bin/bash
+ls
+cd sonatypework/nexus3/ls/admin.password
+
+start creating pipeline > before that goto your project u wanted to works on
+
+plugins
+jdk- eclipse tumerin instaker
+SonarQube scanner
+docker 
+docker pipeline
+docker build step
+owasp dc
+config file provider
+maven integration
+nexus artifact uploader
+
+configure tools:- install automatically
+jdk21
+SonarQube scanner
+maven
+dependency -check
+docker  
+for Jenkins run docker command smoothly so we can use the command on our vm:- sudo chmod 666 /var/run/docker.sock
+sudo systemctl restart docker
+
+create the pipeline
+full-stack-cicd
+
+
+pipeline{
+   agent any
+
+tools{
+jdk 'jdk21'
+maven 'maven3'
+
+environment{
+  SONARQUBE_HOME = tool 'sonar-scanner'}
+   stages{
+      stage('Git-checkout'){
+           steps{
+               git "repo url use pipeline syntax:git"
+}
+}
+      stage('compile'){
+           steps{
+              sh "mvn compile"
+}
+}
+          stage('Unit test'){
+           steps{
+              sh "mvn test"
+}
+}
+
+    stage('Package'){
+           steps{
+              sh "mvn package"
+}
+}
+
+ps:-dependenyCheck:Invoke Dependency-Check
+dependencyCheck additionalArguments: ' --scan ./ ' , odcInstallation:'DC"
+ps:- dependencyCheckPublisher: Publish Dependeny-check results
+xml report pattern:- **/dependency-check-report.xml
+  stage('owasp dc scan'){
+           steps{
+              dependencyCheck additionalArguments: ' --scan ./ ' , odcInstallation:'DC"
+              paste above command in second ps.
+}
+}
+Goto manage Jenkins > system > configure SonarQube server > see SonarQube servers > SonarQube installation  before that goto SonarQube > administration > security > users > token >generate copy > add token in Jenkins cred > add cred > secret text > secret)(paste token)  > goto system inside Jenkins > add soanrqube name:-sonar ,server-url;- ip and port(9000) >auth(token) > now in your pipeline 
+ps:- withSonarQubeEnv:Prepare SonarQube Scanner Environment
+add token generate script
+    stage('SonarQube Analysis'){
+           steps{
+              withSonarQubeEnv('sonar'){
+                 sh ''' $SONARQUBE_HOME/bin/sonar-scanner -Dsonar.projectName=Boardgame -Dsonar.projectKey=Boardgame \
+                         -Dsonar.java.binaries=. '''     //this for java app only
+}
+              
+}
+}
+stage for quality gates > goto SonarQube > administration > configuration >webhook > NAME-Jenkins and url - http://jeninsip:8080/sonarqube-webhook/  > create > add stage in pipeline
+ps:-waitForQualityGate > sonar-token
+ stage('Quality gate'){
+           steps{
+              waitForQualityGate abortPipeline: false
+}
+}
+ps: withDockerRegistry > no need of url > cred(username and pass-same for login dockerhub)
+stage('Docker Build Image'){
+           steps{
+              script{
+                 generated script{
+                    sh "docker build -t boardwebapp:latest ."                             //path of docker file(.)
+                    sh "docker tag boardwebapp:latest apsingh566/boardwebapp:latest"
+}
+}
+}
+}
+trivy install on ubuntu
+   stage('trivy image scan'){
+           steps{
+              sh "trivy image apsingh566/boardwebapp:latest "
+}
+}
+
+stage('Docker push Image'){
+           steps{
+              script{
+                 generated script{
+                    sh "docker push apsingh566/boardwebapp:latest"                                               
+}
+}
+}
+}
+
+
+stage('Docker App to container'){
+           steps{
+              script{
+                 generated script{
+                    sh "docker run -d -p 8085:8080 apsingh566/boardwebapp:latest"                    }
+}
+}
+}
+
+jenkisn having access to use any docker command)run these as a root
+service restart docker
+sudo usermod -aG docker Jenkins
+newgrp docker
+or sudo chmod 666 /var/run/docker.sock
+
+sudo systemctl restart docker
+
+
+
+
+
+
+
+
+
+
+          
+
+
+
+
+
