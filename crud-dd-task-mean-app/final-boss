@@ -1,0 +1,203 @@
+A common structure:
+
+Frontend (React / Angular / Vue)
+        ↓
+Backend (Java / Node / Spring Boot API)
+        ↓
+Database (MySQL / PostgreSQL / MongoDB)
+
+In Kubernetes this becomes:
+
+Frontend Deployment + Service
+Backend Deployment + Service
+Database StatefulSet or Deployment + Service
+2. Example Kubernetes Deployment Structure
+
+You normally create three YAML manifests.
+
+Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: dockerhubuser/frontend:latest
+        ports:
+        - containerPort: 80
+
+Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+Backend Deployment
+
+Backend connects to database.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: dockerhubuser/backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: mysql-service
+
+Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+  - port: 8080
+    targetPort: 8080
+Database Deployment
+
+For databases Kubernetes often uses StatefulSet, but Deployment can also work for simple setups.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root123
+
+Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    app: mysql
+  ports:
+  - port: 3306
+3. Jenkins Pipeline Customization
+
+The pipeline usually builds two images:
+
+frontend image
+
+backend image
+
+Database normally uses a ready image (mysql, postgres) and is not built.
+
+Example pipeline structure:
+
+pipeline {
+agent any
+
+stages {
+
+stage('Checkout') {
+steps {
+git 'repo-url'
+}
+}
+
+stage('Build Backend') {
+steps {
+sh 'cd backend && mvn package'
+}
+}
+
+stage('Build Frontend') {
+steps {
+sh 'cd frontend && npm install && npm run build'
+}
+}
+
+stage('Docker Build Backend') {
+steps {
+sh 'docker build -t dockerhub/backend:latest backend/'
+}
+}
+
+stage('Docker Build Frontend') {
+steps {
+sh 'docker build -t dockerhub/frontend:latest frontend/'
+}
+}
+
+stage('Push Images') {
+steps {
+sh 'docker push dockerhub/backend:latest'
+sh 'docker push dockerhub/frontend:latest'
+}
+}
+
+stage('Deploy to Kubernetes') {
+steps {
+sh 'kubectl apply -f k8s/'
+}
+}
+
+}
+}
+4. Kubernetes Deployment Order
+
+Deployment usually follows this order:
+
+1. Database
+2. Backend
+3. Frontend
+
+Reason:
+
+Frontend → Backend → Database
+
+Each service depends on the next layer.
